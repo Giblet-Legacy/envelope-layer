@@ -46,6 +46,8 @@ out.
 
 ## Functions in this file (planned)
 
+Public API:
+
 1. canonicalise    — canonical JSON string from Python object
 2. canonical_bytes — canonical UTF-8 bytes from Python object
 3. sha256_hex      — SHA-256 hex digest of bytes
@@ -54,6 +56,11 @@ out.
 6. verify_bytes    — verify Ed25519 signature over arbitrary bytes
 7. did_key_encode  — Ed25519 public key → did:key string
 8. did_key_decode  — did:key string → Ed25519 public key
+
+Internal helpers (not exported, called only by did_key_encode/decode):
+
+9.  _base58btc_encode — raw bytes → base58btc string
+10. _base58btc_decode — base58btc string → raw bytes
 
 ---
 
@@ -278,7 +285,8 @@ multibase + multicodec did:key spec for Ed25519:
 1. Take the 32-byte Ed25519 public key.
 2. Prefix with multicodec varint for ed25519-pub = 0xed 0x01
    (two bytes).
-3. Base58btc-encode the resulting 34 bytes.
+3. Base58btc-encode the resulting 34 bytes via `_base58btc_encode`
+   (internal helper, §9a).
 4. Prefix the encoded string with z (base58btc multibase prefix).
 5. Prefix with did:key:.
 
@@ -311,7 +319,8 @@ Output: Ed25519 public key object (32 raw bytes).
 Process (inverse of 4.7):
 1. Strip did:key: prefix.
 2. Strip z multibase prefix.
-3. Base58btc-decode to bytes.
+3. Base58btc-decode to bytes via `_base58btc_decode` (internal
+   helper, §9a).
 4. Strip the 2-byte 0xed 0x01 multicodec prefix.
 5. Remaining bytes must be exactly 32 — the raw Ed25519 public key.
 
@@ -370,6 +379,10 @@ Silent False/None would mask that. P1 raises.
         7. did_key_encode  — Ed25519 public key → did:key string
         8. did_key_decode  — did:key string → Ed25519 public key
 
+    Internal helpers (not exported):
+        9.  _base58btc_encode — raw bytes → base58btc string
+        10. _base58btc_decode — base58btc string → raw bytes
+
     Layer:    P1 — Envelope
     Depends:  (nothing — base primitive)
     Consumed: P2 Sign, P3 Freeze, P4 Ledger, P5 Genesis, P6 Canon Verify,
@@ -397,6 +410,12 @@ matching the list above.
   Other did:key key types (secp256k1, X25519, etc.) are not
   supported and will raise on decode. This matches the Forge
   Stack's single-curve choice.
+
+- base58btc is internal. _base58btc_encode and _base58btc_decode are
+  private helpers, not part of P1's public API. They exist solely to
+  support did_key_encode / did_key_decode. If a future layer needs
+  base58btc for a purpose other than did:key, that is a new layer
+  above P1, not a reason to widen P1 v1.0.0's public surface.
 
 - No passphrase handling. Passphrase-protected key loading is P7's
   responsibility. P1 accepts an already-unlocked key object.
@@ -566,9 +585,51 @@ confuse this with base58-flickr or other variants.
 
 ---
 
+## 9a. Base58btc algorithm
+
+base58btc is the Bitcoin-alphabet base58 encoding. Defined here in
+full so independent implementations can be written from this spec.
+
+Alphabet (58 chars, exact order):
+
+    123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
+
+Index 0 is '1', index 57 is 'z'. Characters 0, O, I, l are excluded.
+
+### _base58btc_encode(data: bytes) -> str
+
+1. Count leading 0x00 bytes in data = z. Emit z leading '1' chars.
+2. Treat data[z:] as big-endian unsigned int n (0 if empty).
+3. While n > 0: digit = n % 58; prepend ALPHABET[digit]; n = n // 58.
+4. Output = ('1' * z) + body (body empty if n was always 0).
+
+### _base58btc_decode(s: str) -> bytes
+
+1. Count leading '1' chars = z. Emit z leading 0x00 bytes.
+2. For each char c in s[z:]: if c not in ALPHABET raise ValueError;
+   n = n * 58 + ALPHABET.index(c).
+3. Convert n to minimum-length big-endian bytes (empty if n==0).
+4. Output = (b'\x00' * z) + body_bytes.
+
+### Conformance anchor
+
+For 34-byte input bytes.fromhex("ed01") + <32-byte Ed25519 pk>,
+_base58btc_encode output prefixed with 'z' and 'did:key:' must match
+did:key:z6MkgGoK1f2rh84pkWmFL3ew1CmMidaPxVFSvxsbUyxkKLZE for the
+matching key. Fastest conformance check available.
+
+---
+
 ## Document control
 
-- This spec is SPEC v1.0.0, frozen at sign-off.
+- **SPEC v1.1.0** — current version, frozen at sign-off of this
+  revision.
+- **Revision history:**
+  - v1.0.0 — initial spec. Eight public functions. did:key in P1.
+  - v1.1.0 — added §9a specifying base58btc algorithm; §4.7/§4.8
+    reference internal helpers `_base58btc_encode`/`_base58btc_decode`;
+    function list distinguishes public API from internal helpers.
+    Pre-implementation refinement.
 - Implementation of envelope.py v1.0.0 must match this spec.
 - Tests in test_envelope.py must match this spec.
 - Independent implementation for verification must be written from

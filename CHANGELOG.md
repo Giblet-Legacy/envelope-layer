@@ -21,6 +21,7 @@ Function:
 - SPEC.md written and agreed (SPEC v1.0.0).
 - did:key moved into P1 (decision, spec revision 1).
 - Numeric type sensitivity accepted as Known Limitation.
+- SPEC v1.1.0: base58btc algorithm specified, internal helpers declared.
 
 ### Bad
 - Laptop-side clone verification of the scaffold deferred — no PC access

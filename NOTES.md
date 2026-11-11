@@ -31,3 +31,10 @@ Function:
   adding numeric normalisation would diverge from plain
   json.dumps and complicate the canonicalisation rule for a case
   the stack can avoid by discipline.
+- base58btc lives in P1 as internal helpers (_base58btc_encode and
+  _base58btc_decode). Decided at spec review, revision 1.1.0.
+  Rationale: base58btc is an encoding, not a cryptographic primitive.
+  Keeping it private avoids widening P1's public API speculatively,
+  while ensuring did:key is fully specified and independently
+  implementable. If a future layer needs base58btc, it gets a new P1
+  layer above (v1.1.0), not a public API change to v1.0.0.

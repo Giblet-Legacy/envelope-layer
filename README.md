@@ -47,6 +47,12 @@ See CHANGELOG.md — Good / Bad / Ugly, latest at top.
 
 ## Verifying this repository
 
-Verification commands will be added once `envelope.py` and its tests exist.
+P1 is frozen at v1.0.0. To verify:
+
+1. Run the test suite:
+   `pytest -q test_envelope.py` (expect 27 passed)
+2. Run the independent spec check:
+   `python3 verify_spec.py` (expect OK)
+
 Independent reimplementation of P1 from the spec — not self-verification —
 is the acceptance test.

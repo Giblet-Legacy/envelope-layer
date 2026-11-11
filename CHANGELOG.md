@@ -11,46 +11,69 @@ Function:
 
 ### Good
 
-- Laptop review (2026-11-11): 27/27 v1.0.0 tests and `verify_spec.py`
-  pass on Windows / Python 3.13 / cryptography 49.0.0. All tracked
-  files LF. Closes the v0.0.0-dev "Bad": the laptop has `dd47f52` and
-  everything after it.
+- (none)
+
+### Bad
+
+- (none)
+
+### Ugly
+
+- (none)
+
+## [v2.0.0] — 2026-11-11
+
+### Good
+
+- `envelope_v2.py`: strict layer above the frozen P1 v1.0.0, specified
+  in `SPEC_V2.md` before any code. It delegates every byte to
+  envelope.py, so every v1 artefact still verifies (tested both ways).
+- Q1 resolved (James: "reject"): NaN / Infinity / -Infinity raise
+  ValueError in v2 canonicalise. Resolves D4.
+- Q2 resolved (option b, AI-decided on delegation): v2 raises TypeError
+  for wrong input types in verify_bytes, sign_bytes and did_key_encode,
+  as SPEC v1.1.0 §4.5–§4.7 already required. Resolves D1–D3.
+- Q3 resolved (AI-decided on delegation): tag `v1.0.0` → `6c71b8d`,
+  tag `v2.0.0` → this release.
+- `test_envelope_v2.py`: 34 tests, written before envelope_v2.py and
+  run red first. Cross-implementation suite now 50, including v2
+  against the independent implementation.
+- Laptop review: 27/27 v1.0.0 tests and `verify_spec.py` pass on
+  Windows / Python 3.13 / cryptography 49.0.0. All tracked files LF.
+  Closes the v0.0.0-dev "Bad": the laptop has `dd47f52` onward.
 - SPEC §8.4 independent implementation added in `independent/`:
   hand-written canonicaliser, hand-rolled SHA-256 (FIPS 180-4,
   constants derived from primes) and Ed25519 (RFC 8032), base58btc and
   did:key from §9/§9a. Stdlib only; never imports envelope.
-- `independent/test_cross.py`: 49 cross-implementation tests. Canonical
-  bytes, SHA-256, public keys, signatures and did:key strings are
-  byte-identical to envelope.py. Each side verifies the other's
-  signatures. RFC 8032 §7.1 TEST 1 and FIPS vectors pass.
 - Missing SPEC §8 tests added to `test_envelope.py`: §8.1 nested
   expected form, §8.3b secp256k1 wrong key type. 29/29 pass.
   `envelope.py` untouched.
 - Header discipline: `verify_spec.py` (header + numbered functions) and
   `.gitignore` (header, plus `.pytest_cache/`).
 - `requirements.txt` added (`cryptography`; laptop version recorded).
-- README brought up to date: status 1.0.0, did:key, file map,
-  verification steps. Removed the claim that P1 signs with
+- README brought up to date. Removed the claim that P1 signs with
   `"signature": null` — that is P2's capsule rule (SPEC §3).
 - SPEC errata E1 (header version label) and E2 (stale document-control
   sentence). No normative change.
-- NOTES: divergences D1–D4 and open questions Q1–Q3 recorded.
 - `CLAUDE.md` added and expanded for VS Code AI context.
 - This CHANGELOG restructured so every entry has Good / Bad / Ugly.
+- Totals: 113 tests pass (v1 29, v2 34, cross 50).
 
 ### Bad
 
-- envelope.py v1.0.0 diverges from SPEC v1.1.0 on four edge cases
-  (NOTES D1–D4): str data to verify_bytes returns False instead of
-  raising TypeError; two AttributeErrors where TypeError is specified;
-  NaN / Infinity emitted as non-JSON tokens. Pinned, not fixed.
-- No `v1.0.0` git tag exists yet (NOTES Q3).
+- envelope.py v1.0.0 still has D1–D4. It is frozen, so they are pinned
+  rather than fixed; any caller still importing envelope directly
+  keeps them. New code must import envelope_v2.
+- Q2 and Q3 were decided by the AI on James's delegation, not by
+  James. Recorded as such in NOTES.md so they can be revisited.
+- S24 (Termux) has not yet run the v2 or cross suites. Outstanding
+  until the S24 pulls and confirms.
 
 ### Ugly
 
-- P1 was declared frozen before SPEC §7's own condition was met: the
-  freeze-time independent check covered base58btc only. The full
-  cross-implementation check now passes, but after the freeze rather
+- P1 v1.0.0 was declared frozen before SPEC §7's own condition was
+  met: the freeze-time independent check covered base58btc only. The
+  full cross-implementation check passes, but after the freeze rather
   than before it.
 
 ## [v1.0.0] — 2026-11-11

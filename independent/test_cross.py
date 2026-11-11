@@ -9,8 +9,10 @@ Function:
     must verify on the other. This is the acceptance test SPEC §7
     names: agreement between two implementations, not self-checks.
 
-    Also pins the known divergences recorded in NOTES.md (D1–D4), so
-    any future layer that resolves them is detected by a failing pin.
+    Also pins the known v1 divergences recorded in NOTES.md (D1–D4).
+    envelope.py is frozen, so these pins hold forever; the divergences
+    are resolved in envelope_v2.py, which test 15 checks against the
+    independent implementation.
 
     Inputs are fixed vectors plus seeded pseudo-random corpora (seed
     fixed, so runs are reproducible on both devices).
@@ -29,10 +31,11 @@ Functions in this file (pytest-collected):
     11. test_did_key_agreement             — encode/decode identical
     12. test_did_key_independent_errors    — SPEC §4.8 failure modes
     13. test_base58_leading_zeros          — SPEC §9a leading-zero rule
-    14. test_divergence_pins               — NOTES.md D1–D4 current behaviour
+    14. test_divergence_pins               — NOTES.md D1–D4 v1 behaviour (frozen)
+    15. test_v2_agreement                  — envelope_v2 vs independent, incl. NaN
 
 Helpers:
-    15. _random_value                      — seeded random JSON value
+    16. _random_value                      — seeded random JSON value
 
 Layer:    P1 — Envelope (independent verification)
 Spec:     SPEC.md v1.1.0
@@ -53,6 +56,7 @@ sys.path.insert(0, _HERE)
 sys.path.insert(0, os.path.dirname(_HERE))
 
 import envelope  # noqa: E402  (P1 v1.0.0, under test)
+import envelope_v2  # noqa: E402  (P1 v2.0.0 strict layer, under test)
 import p1_independent as ind  # noqa: E402  (independent, never imports envelope)
 
 
@@ -64,7 +68,7 @@ def _raw_pub(pk):
 
 
 # ---------------------------------------------------------------------------
-# 15. _random_value
+# 16. _random_value
 #     Seeded random JSON value: nested dicts/lists, unicode (incl. astral
 #     plane and control chars), ints of all sizes, finite floats.
 # ---------------------------------------------------------------------------
@@ -264,9 +268,9 @@ def test_base58_leading_zeros(data):
 
 # ---------------------------------------------------------------------------
 # 14. test_divergence_pins
-#     Pins envelope.py v1.0.0's CURRENT behaviour where it diverges from
-#     SPEC v1.1.0 (NOTES.md D1–D4). These are not endorsements. If a
-#     future layer resolves a divergence, update the pin and NOTES.md.
+#     Pins envelope.py v1.0.0's behaviour where it diverges from SPEC
+#     v1.1.0 (NOTES.md D1–D4). Not endorsements: v1 is frozen, so these
+#     hold forever. Resolved in envelope_v2.py (see test 15).
 # ---------------------------------------------------------------------------
 def test_divergence_pins():
     sk = Ed25519PrivateKey.generate()
@@ -284,3 +288,25 @@ def test_divergence_pins():
     assert envelope.canonicalise(float("inf")) == "Infinity"
     with pytest.raises(ValueError):
         ind.canonicalise(float("nan"))
+
+
+# ---------------------------------------------------------------------------
+# 15. test_v2_agreement
+#     envelope_v2 matches the independent implementation on the whole
+#     canonical corpus, and both reject non-finite floats (resolves D4).
+# ---------------------------------------------------------------------------
+def test_v2_agreement():
+    rng = random.Random(SEED)
+    corpus = FIXED_CORPUS + [_random_value(rng) for _ in range(500)]
+    for obj in corpus:
+        assert envelope_v2.canonical_bytes(obj) == ind.canonical_bytes(obj), repr(obj)
+    for bad in [float("nan"), float("inf"), float("-inf"), {"a": [float("nan")]}]:
+        with pytest.raises(ValueError):
+            envelope_v2.canonicalise(bad)
+        with pytest.raises(ValueError):
+            ind.canonicalise(bad)
+    seed = bytes(range(32))
+    sk = Ed25519PrivateKey.from_private_bytes(seed)
+    msg = envelope_v2.canonical_bytes({"signature": None, "v": 2})
+    assert envelope_v2.sign_bytes(msg, sk) == ind.ed25519_sign(seed, msg)
+    assert envelope_v2.did_key_encode(sk.public_key()) == ind.did_key_encode(ind.ed25519_public_key(seed))

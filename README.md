@@ -7,7 +7,8 @@ Function:
     canonical JSON, SHA-256, Ed25519 sign/verify, and did:key
     encoding/decoding for Ed25519 public keys. It is the bottom-most
     layer. Every layer above it depends on P1 and none depends below
-    it. It is frozen at v1.0.0.
+    it. envelope.py is frozen at v1.0.0; envelope_v2.py is the strict
+    layer above it, frozen at v2.0.0. New code imports envelope_v2.
 
 Layer:    P1 — Envelope
 Depends:  (nothing — this is the base primitive)
@@ -15,8 +16,19 @@ Consumed: P2 Sign, P3 Freeze, P4 Ledger, P5 Genesis, P6 Canon Verify,
           P7 Record, and — transitively — every layer above.
 Licence:  MSL-1.0
 Author:   James Gilbert (Giblets Forge)
-Status:   1.0.0 — frozen. envelope.py is never edited (Immutable Rule).
-Spec:     SPEC.md v1.1.0
+Status:   2.0.0 — envelope.py v1.0.0 and envelope_v2.py v2.0.0 both
+          frozen. Neither is ever edited (Immutable Rule).
+Spec:     SPEC.md v1.1.0 (v1), SPEC_V2.md 2.0.0 (v2)
+
+## Which module to import
+
+`import envelope_v2`. It returns exactly the same bytes as envelope.py
+for every valid input, so v1-signed artefacts still verify, but it
+raises on bad input instead of misbehaving:
+
+- NaN / Infinity in canonicalise → ValueError (v1 emitted non-JSON)
+- non-bytes data or signature, or a non-Ed25519 key → TypeError
+  (v1 returned False or raised AttributeError)
 
 ## What this layer is responsible for
 
@@ -47,11 +59,14 @@ given. The two signing rules live above it:
 
 | File | Purpose |
 | --- | --- |
-| `envelope.py` | P1 v1.0.0 implementation — frozen, never edited |
+| `envelope_v2.py` | P1 v2.0.0 strict layer — import this. Frozen |
+| `envelope.py` | P1 v1.0.0 primitive — frozen, never edited |
+| `SPEC_V2.md` | Spec for envelope_v2 (changes over SPEC.md only) |
 | `SPEC.md` | Authoritative spec (v1.1.0). The spec wins over the code |
+| `test_envelope_v2.py` | SPEC_V2 §5 tests (34) |
 | `test_envelope.py` | SPEC §8.1–§8.3b tests (29) |
 | `independent/p1_independent.py` | SPEC §8.4 independent reimplementation — never imports envelope |
-| `independent/test_cross.py` | Cross-implementation agreement tests (49) |
+| `independent/test_cross.py` | Cross-implementation agreement tests (50) |
 | `verify_spec.py` | Original freeze-time base58btc check |
 | `NOTES.md` | Decisions, open questions, known divergences (D1–D4) |
 | `CHANGELOG.md` | Good / Bad / Ugly, latest at top |
@@ -62,9 +77,9 @@ given. The two signing rules live above it:
 
 From the repository root (`python3` on Termux, `python` on Windows):
 
-1. `python -m pytest -q test_envelope.py` — expect 29 passed
-2. `python -m pytest -q independent/` — expect 49 passed
-3. `python verify_spec.py` — expect `OK`
+1. `python -m pytest -q test_envelope.py test_envelope_v2.py independent/`
+   — expect 113 passed (29 + 34 + 50)
+2. `python verify_spec.py` — expect `OK`
 
 Independent reimplementation of P1 from the spec — not
 self-verification — is the acceptance test (SPEC §7).
@@ -73,9 +88,10 @@ self-verification — is the acceptance test (SPEC §7).
 
 envelope.py v1.0.0 disagrees with SPEC v1.1.0 on four edge cases
 (wrong exception types and non-finite floats). None affects a valid
-signature or did:key. See NOTES.md D1–D4. They are pinned by
-`independent/test_cross.py::test_divergence_pins` and will be resolved,
-if at all, by a new layer above P1 — never by editing envelope.py.
+signature or did:key. See NOTES.md D1–D4. All four are resolved in
+envelope_v2.py. They stay pinned against envelope.py by
+`independent/test_cross.py::test_divergence_pins`, because v1 is
+frozen and will never change.
 
 ## CHANGELOG
 

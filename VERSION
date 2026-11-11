@@ -1,5 +1,8 @@
 # VERSION — P1 Envelope (envelope-layer)
 # Function: the current release version of this layer. Advances only on freeze.
 # 1.0.0 — P1 frozen. Tests pass (27/27). Independent spec verification passed.
+#         Tag v1.0.0 → 6c71b8d (first and only commit of envelope.py).
+# 2.0.0 — envelope_v2.py strict layer frozen (SPEC_V2.md). v1 29/29,
+#         v2 34/34, cross-implementation 50/50. envelope.py unchanged.
 
-1.0.0
+2.0.0

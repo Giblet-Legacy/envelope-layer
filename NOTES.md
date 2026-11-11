@@ -13,6 +13,10 @@ Function:
 
 ## Open questions
 
+- (none)
+
+## Resolved questions
+
 - **Q1 — Non-finite floats (see D4).** SPEC v1.1.0 says nothing about
   NaN / Infinity / -Infinity. envelope.py emits the non-JSON tokens
   `NaN`, `Infinity`, `-Infinity`; the independent implementation
@@ -21,16 +25,33 @@ Function:
   next layer above P1 calls `json.dumps(..., allow_nan=False)`. Adding
   this rejection changes no bytes for any valid JSON input, so every
   v1-signed artefact still verifies. Raised 2026-11-11. Owner: James.
+  **Resolved 2026-11-11 — James: "reject".** SPEC_V2.md §2.1;
+  envelope_v2.canonicalise raises ValueError. Implemented by
+  delegating to v1 and rejecting non-finite tokens in its output
+  (not by re-calling json.dumps), so the bytes are v1's by
+  construction.
 - **Q2 — Resolve D1–D3 or accept them?** Options: (a) record them as
   SPEC errata that relax the exception type to "raises" (no code
   change); (b) a strict-typing layer above P1 v1.0.0 that checks types
   before delegating. Recommendation: (a) for D2/D3 (wrong exception
   class only), and decide D1 explicitly, since it turns a caller bug
   into a silent False. Raised 2026-11-11. Owner: James.
+  **Resolved 2026-11-11 — option (b), decided by the VS Code AI on
+  James's delegation ("please decide and finish").** Reason: Q1
+  already needed a layer above P1, so the strict checks cost nothing
+  extra there, and (b) makes the code match what SPEC v1.1.0 already
+  said instead of weakening the spec to match the code. SPEC_V2.md
+  §2.2–§2.4.
 - **Q3 — What does the `v1.0.0` git tag mean?** No tag exists yet. Tag
   the freeze commit `1cb2aa6`/`6c71b8d` as-is, or tag only after the
   §8.4 cross-implementation check (now in `independent/`) is signed
   off? Raised 2026-11-11. Owner: James.
+  **Resolved 2026-11-11 — decided by the VS Code AI on James's
+  delegation.** `v1.0.0` tags `6c71b8d`, the only commit that touches
+  envelope.py (`1cb2aa6` is the freeze note and predates the code).
+  The tag means "these are the frozen v1 bytes", not "fully verified";
+  the CHANGELOG Ugly records that §8.4 passed after the freeze.
+  `v2.0.0` tags the commit that freezes envelope_v2.py.
 
 ## Divergences from v1.2.1 specification
 
@@ -42,6 +63,10 @@ Found 2026-11-11 (laptop review). Pinned in
 `independent/test_cross.py::test_divergence_pins`. None affects a
 valid signature, digest or did:key — they are all failure-path or
 out-of-contract inputs.
+
+**All four are resolved in envelope_v2.py (SPEC_V2.md).** They remain
+true of envelope.py forever, because v1 is frozen. New code imports
+envelope_v2.
 
 - **D1 — verify_bytes with str data returns False.** SPEC §4.6:
   "TypeError only if data/signature not bytes-like". The cryptography
@@ -90,13 +115,23 @@ against such a key returns False.
   layer above P1 v1.0.0 (version assigned when specified), not a
   public API change to v1.0.0.
 - SPEC.md header/metadata corrections are errata, not a new SPEC
-  version. Proposed 2026-11-11, pending James's sign-off. An erratum may fix a wrong version
+  version. Decided 2026-11-11 by the VS Code AI on James's delegation
+  ("please decide and finish"). An erratum may fix a wrong version
   label or a stale sentence, but never a normative rule; each one is
   listed under "Errata" in SPEC.md's document control. Anything
   normative needs a new SPEC version.
 - The §8.4 independent implementation lives in `independent/`, is
   stdlib-only, and hand-rolls canonicalisation, SHA-256 and Ed25519
   instead of reusing json.dumps, hashlib.sha256 or cryptography.
-  Proposed 2026-11-11, pending James's sign-off. Rationale: two implementations that call the
+  Decided 2026-11-11 by the VS Code AI on James's delegation.
+  Rationale: two implementations that call the
   same library prove nothing about the library call (SPEC §7).
   `p1_independent.py` must never import envelope.
+- envelope_v2.py is a layer, not a rewrite. Decided 2026-11-11 (Q1/Q2).
+  It delegates every byte to envelope.py and only adds rejections.
+  Re-exports sha256_hex, sha256_digest and did_key_decode unchanged.
+  Major version 2 because it rejects inputs v1 accepted. New code
+  imports envelope_v2. envelope.py stays importable for existing
+  callers and for the divergence pins.
+- Spec file per layer: SPEC.md describes envelope.py (v1.1.0, errata
+  only); SPEC_V2.md describes envelope_v2.py. Decided 2026-11-11.

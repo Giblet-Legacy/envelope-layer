@@ -20,7 +20,9 @@ Function:
 - `envelope-layer` visibility: PUBLIC (org convention for primitives).
 
 ### Bad
-- (none)
+- Laptop-side clone verification of the scaffold deferred — no PC access
+  at setup time. Outstanding until the VS Code device pulls and confirms
+  `dd47f52`.
 
 ### Ugly
 - (none)

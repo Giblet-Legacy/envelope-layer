@@ -7,7 +7,13 @@ Function:
     Updated at every sign-off. Kept current without exception. Format
     never changes shape, even when a section is empty.
 
-## [Unreleased]
+## [v1.0.0] — 2026-11-11
+
+### Good
+- `envelope.py` implemented to SPEC v1.1.0.
+- 27/27 pytest tests pass.
+- Independent base58btc verification passed (verify_spec.py).
+- Layer frozen at v1.0.0.
 
 ### Good
 - Repository scaffolded: `Giblet-Legacy/envelope-layer` created for P1.

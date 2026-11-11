@@ -1,0 +1,6 @@
+# VERSION — P1 Envelope (envelope-layer)
+# Function: the current release version of this layer. Advances only on freeze.
+# 0.0.0-dev means the layer is in build and has not yet been signed off at v1.
+# On first freeze this becomes 1.0.0 and a CHANGELOG entry is raised.
+
+0.0.0-dev

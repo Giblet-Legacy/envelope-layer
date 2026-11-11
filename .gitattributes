@@ -1,0 +1,11 @@
+# .gitattributes — line-ending and text handling policy for this repository.
+# Function: enforce LF line endings on every text file, never allow CRLF,
+# and mark known artefact types so git treats them consistently across
+# the S24 (Termux) and laptop (VS Code) build devices.
+
+* text=auto eol=lf
+*.py     text eol=lf
+*.md     text eol=lf
+*.json   text eol=lf
+*.jsonl  text eol=lf
+*.txt    text eol=lf

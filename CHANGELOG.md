@@ -7,6 +7,17 @@ Function:
     Updated at every sign-off. Kept current without exception. Format
     never changes shape, even when a section is empty.
 
+## [Unreleased]
+
+### Good
+- Added `CLAUDE.md` for VS Code AI context sync.
+
+### Bad
+- (none)
+
+### Ugly
+- (none)
+
 ## [v1.0.0] — 2026-11-11
 
 ### Good

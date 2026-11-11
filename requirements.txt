@@ -1,0 +1,10 @@
+# requirements.txt — P1 Envelope (envelope-layer)
+# Function: the only runtime dependency P1 is allowed (CLAUDE.md, P1
+# Architecture Specifics). Everything else is standard library.
+#
+# Confirmed on laptop (Windows, Python 3.13): cryptography 49.0.0.
+# S24 (Termux) version: unconfirmed — record it here when checked.
+#
+# Tests additionally need pytest (test tool, not a runtime dependency).
+
+cryptography

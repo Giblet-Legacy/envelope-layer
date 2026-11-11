@@ -1,2 +1,7 @@
+# .gitignore — files git must never track in this repository.
+# Function: keep Python bytecode and test caches out of history so the
+# S24 (Termux) and laptop (VS Code) checkouts stay byte-identical.
+
 __pycache__/
 *.pyc
+.pytest_cache/

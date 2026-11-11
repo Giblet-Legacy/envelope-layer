@@ -7,10 +7,15 @@ Function:
     in SPEC.md. All tests must pass before P1 is signed off.
 
 Functions in this file (test functions, pytest-collected):
-    §8.1 canonicalise   — roundtrip, sort, no-whitespace, ascii, numbers, literals
+    §8.1 canonicalise   — roundtrip, sort, no-whitespace, ascii, nested,
+                          numbers, literals
     §8.2 sha256         — known vectors, length, consistency
     §8.3 ed25519        — roundtrip, wrong data/key, length, determinism, malformed
-    §8.3b did:key       — roundtrip, prefix, format, known vector, error cases
+    §8.3b did:key       — roundtrip, prefix, format, known vector, wrong
+                          prefix/multibase/key type/length, invalid char
+
+    Cross-implementation agreement (SPEC §8.4) lives in
+    independent/test_cross.py, not here.
 
 Layer:    P1 — Envelope
 Spec:     SPEC.md v1.1.0
@@ -23,7 +28,6 @@ import re
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-# This import will fail until envelope.py is written. That is expected.
 import envelope
 
 
@@ -49,6 +53,9 @@ def test_canonicalise_unicode_escape():
 def test_canonicalise_empty():
     assert envelope.canonicalise({}) == "{}"
     assert envelope.canonicalise([]) == "[]"
+
+def test_canonicalise_nested():
+    assert envelope.canonicalise({"a": {"b": [1, 2]}}) == '{"a":{"b":[1,2]}}'
 
 def test_canonicalise_numbers():
     assert envelope.canonicalise(1) == "1"
@@ -146,6 +153,11 @@ def test_did_key_wrong_prefix():
 def test_did_key_wrong_multibase():
     with pytest.raises(ValueError):
         envelope.did_key_decode("did:key:f6Mkabc")
+
+def test_did_key_wrong_key_type():
+    # secp256k1 did:key (multicodec 0xe7 0x01) — valid base58btc, wrong curve
+    with pytest.raises(ValueError):
+        envelope.did_key_decode("did:key:zQ3shokFTS3brHcDQrn82RUDfCZESWL1ZdCEJwekUDPQiYBme")
 
 def test_did_key_invalid_char():
     # 0, O, I, l are not in base58btc

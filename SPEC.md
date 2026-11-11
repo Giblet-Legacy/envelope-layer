@@ -21,7 +21,7 @@ Layer:     P1 — Envelope
 Depends:   (nothing — base primitive)
 Consumed:  P2 Sign, P3 Freeze, P4 Ledger, P5 Genesis, P6 Canon Verify,
            P7 Record
-Version:   SPEC 1.0.0
+Version:   SPEC 1.1.0
 Licence:   MSL-1.0
 Author:    James Gilbert (Giblets Forge)
 
@@ -634,5 +634,14 @@ matching key. Fastest conformance check available.
 - Tests in test_envelope.py must match this spec.
 - Independent implementation for verification must be written from
   this spec, without reference to envelope.py.
-- Changes require a new SPEC version. SPEC v1.1.0 would describe
-  changes above P1 v1.0.0, per the Immutable Rule.
+- Changes require a new SPEC version. The next SPEC version (v1.2.0
+  or later) describes a layer above P1 v1.0.0, per the Immutable Rule.
+- **Errata** (non-normative corrections; no rule, contract or test
+  vector changed):
+  - E1 (2026-11-11) — header `Version:` read `SPEC 1.0.0`; corrected to
+    `SPEC 1.1.0` to match this document control section.
+  - E2 (2026-11-11) — the final document-control bullet said "SPEC
+    v1.1.0 would describe changes above P1 v1.0.0", written before
+    v1.1.0 existed; reworded to refer to the next SPEC version.
+  - Known gaps and implementation divergences are recorded in
+    NOTES.md (Q1–Q3, D1–D4), not patched here.

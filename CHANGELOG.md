@@ -18,6 +18,9 @@ Function:
 - Repo naming convention established: `<primitive>-layer` for primitives,
   bare name for consumers.
 - `envelope-layer` visibility: PUBLIC (org convention for primitives).
+- SPEC.md written and agreed (SPEC v1.0.0).
+- did:key moved into P1 (decision, spec revision 1).
+- Numeric type sensitivity accepted as Known Limitation.
 
 ### Bad
 - Laptop-side clone verification of the scaffold deferred — no PC access
